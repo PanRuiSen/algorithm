@@ -17,62 +17,113 @@ using namespace std;
 
 //http://norvig.com/spell-correct.html
 
-
-inline int& GetValue( vector<int>& vet, int r, int c, int colSize )
-{
-    return vet[((r) * (colSize)) + (c)];
-}
+//
+//inline int& GetValue( vector<int>& vet, int r, int c, int colSize )
+//{
+//    return vet[((r) * (colSize)) + (c)];
+//}
+//
+//int EditDistance( const string& a, const string& b )
+//{
+//    //#define MY_GET_VALUE(r, c)\
+//    //    ((r) * (col)) + (c)
+//
+//
+//    int m = a.length(), n = b.length();
+//    int row = (m + 1), col = (n + 1);
+//
+//    vector<int> dp;
+//    dp.resize( row * col );
+//
+//    for ( int i = 0; i <= m; i++ )
+//        GetValue( dp, i, 0, col ) = i;
+//
+//    for ( int j = 0; j <= n; j++ )
+//        GetValue( dp, 0, j, col ) = j;
+//
+//
+//    for ( int i = 1; i <= m; i++ )
+//    {
+//        for ( int j = 1; j <= n; j++ )
+//        {
+//            if ( a[i - 1] != b[j - 1] )
+//            {
+//
+//                GetValue( dp, i, j, col ) = min(
+//                    //abc -> abd
+//                    //cbd -> cbd
+//                    1 + GetValue( dp, i - 1, j - 1, col ),   //Ìæ»»  
+//                    min(
+//                        //abc -> ab
+//                        //cbd -> cbd    
+//                        1 + GetValue( dp, i - 1, j, col ),
+//
+//                        //abc -> abcd
+//                        //cbd ->  cbd    
+//                        1 + GetValue( dp, i, j - 1, col )
+//                    )
+//                );
+//            }
+//            else
+//                GetValue( dp, i, j, col ) = GetValue( dp, i - 1, j - 1, col );
+//        }
+//    }
+//
+//
+//    return GetValue( dp, m, n, col );
+//
+//#undef MY_GET_VALUE
+//}
 
 int EditDistance( const string& a, const string& b )
 {
-    //#define MY_GET_VALUE(r, c)\
-    //    ((r) * (col)) + (c)
-
-
     int m = a.length(), n = b.length();
-    int row = (m + 1), col = (n + 1);
+    int col = (n + 1);
 
     vector<int> dp;
-    dp.resize( row * col );
+    dp.resize( 2 * col );
 
-    for ( int i = 0; i <= m; i++ )
-        GetValue( dp, i, 0, col ) = i;
+    int* pre = dp.data();
+    int* cur = pre + col;
 
     for ( int j = 0; j <= n; j++ )
-        GetValue( dp, 0, j, col ) = j;
+    {
+        pre[j] = j;
+    }
 
 
     for ( int i = 1; i <= m; i++ )
     {
+        cur[0] = i;
         for ( int j = 1; j <= n; j++ )
         {
             if ( a[i - 1] != b[j - 1] )
             {
 
-                GetValue( dp, i, j, col ) = min(
+                cur[j] = min(
                     //abc -> abd
                     //cbd -> cbd
-                    1 + GetValue( dp, i - 1, j - 1, col ),   //Ìæ»»  
+                    1 + pre[j - 1],   //Ìæ»»  
                     min(
                         //abc -> ab
                         //cbd -> cbd    
-                        1 + GetValue( dp, i - 1, j, col ),
+                        1 + pre[j],
 
                         //abc -> abcd
                         //cbd ->  cbd    
-                        1 + GetValue( dp, i, j - 1, col )
+                        1 + cur[j - 1]
                     )
                 );
             }
             else
-                GetValue( dp, i, j, col ) = GetValue( dp, i - 1, j - 1, col );
+                cur[j] = pre[j - 1];
         }
+        swap( pre, cur );
     }
 
 
-    return GetValue( dp, m, n, col );
+    return pre[n];
 
-#undef MY_GET_VALUE
 }
 
 struct Node
@@ -138,12 +189,22 @@ struct Node
 
         */
 
-        for ( auto& child : childens )
+        /*for ( auto& child : childens )
         {
             if ( (dist - n) <= child.first && child.first <= (dist + n) )
             {
                 child.second.GetWords( strings, s, n );
             }
+        }*/
+
+
+        auto it1 = childens.lower_bound( (dist - n) );
+        auto it2 = childens.upper_bound( (dist + n) );
+
+        while ( it1 != it2 )
+        {
+            it1->second.GetWords( strings, s, n );
+            ++it1;
         }
     }
 
@@ -217,6 +278,9 @@ int main()
     map<int, vector<string>> words;
 
     tree.GetWords( words, "ther", 1 );
+
+    assert( words.rbegin()->second[0] == "the" );
+    assert( words.begin()->second[0] == "tier" );
 
     return 0;
 }
